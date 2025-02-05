@@ -6,7 +6,6 @@
 
 import { findGroupChildrenByChildId } from "@api/ContextMenu";
 import { updateMessage } from "@api/MessageUpdater";
-import { PluginCategories } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { parseUrl } from "@utils/misc";
 import definePlugin from "@utils/types";
@@ -14,7 +13,6 @@ import { findByCodeLazy } from "@webpack";
 import {
     ChannelStore,
     Constants,
-    Icons,
     Menu,
     React,
     RestAPI,
@@ -25,6 +23,7 @@ import { Message } from "discord-types/general";
 
 import { settings } from "./settings";
 
+const RefreshIcon = findByCodeLazy("M21 2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 1 1 0-2h3.93A8");
 const convertEmbed = findByCodeLazy(".uniqueId(\"embed_\")");
 const logger = new Logger("EmbedReplace");
 
@@ -57,7 +56,7 @@ function addShowEmbedButton(children, props) {
                 id="replace-embed"
                 label="Replace Embed"
                 action={_ => unfurlEmbed(repUrl, origUrl, message)}
-                icon={Icons.RefreshIcon}
+                icon={RefreshIcon}
                 key="replace-embed"/>);
     }
 }
@@ -155,7 +154,7 @@ function normaliseUrl(url: string): string {
     const xDotComRegex = /(https?:\/\/(?:www\.)?)x\.com(\/.*)?/;
 
     if (xDotComRegex.test(url)) {
-        url = url.replace(xDotComRegex, "$1twitter.com$2");
+        url =url.replace(xDotComRegex, (match, p1, p2) => p1 + "twitter.com" + (p2 || ""));
     }
 
     return url;
@@ -177,7 +176,6 @@ export default definePlugin({
     name: "EmbedReplace",
     description: "Replace URLs used to fetch embed contents",
     authors: [{ id: 772601756776923187n, name: "Suffocate" }],
-    categories: [PluginCategories.TWEAKS, { name:"Custom Category", description:"A custom category added by a user plugin" }],
 
     settings,
 

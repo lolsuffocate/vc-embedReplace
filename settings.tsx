@@ -6,7 +6,8 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
-import { Clickable, Forms, Icons, React, Switch, TextInput, TooltipContainer } from "@webpack/common";
+import { Clickable, Forms, React, Switch, TextInput, TooltipContainer } from "@webpack/common";
+import { findComponentByCodeLazy } from "@webpack";
 
 type Replacement = { match: string, replace: string, isRegex: boolean, key: string, toSave?: boolean, toDelete?: boolean, newEntry?: boolean };
 
@@ -15,6 +16,11 @@ type RowProps = {
     newRow?: boolean,
     onChange: (replacement: Replacement) => void
 };
+
+const PlusMediumIcon = findComponentByCodeLazy("M13 5a1 1 0 1 0-2");
+const TrashIcon = findComponentByCodeLazy("M14.25 1c.41 0 .75.34.75.75V3h5.25c.41");
+const CopyIcon = findComponentByCodeLazy("M3 16a1 1 0 0 1-1-1v-5a8");
+const UndoIcon = findComponentByCodeLazy("M2 8a1 1 0 0 1 2 0v3.54A10.26");
 
 const ReplacementRow = (props: RowProps) => {
     const [match, setMatch] = React.useState(props.replacement.match);
@@ -61,6 +67,7 @@ const ReplacementRow = (props: RowProps) => {
         }
     }, [match, replace, isRegex]);
 
+    // @ts-ignore
     return <div style={{
         display: "flex",
         flexDirection: "column",
@@ -138,7 +145,7 @@ const ReplacementRow = (props: RowProps) => {
                             setReplace("");
                             setIsRegex(false);
                         }}>
-                        <Icons.PlusMediumIcon name="Save"
+                        <PlusMediumIcon name="Save"
                                               style={{ alignSelf: "center" }}
                                               {...(validAndChanged ? { color: "green" } : { color: "grey" })}/>
                     </Clickable>
@@ -181,7 +188,7 @@ const ReplacementRow = (props: RowProps) => {
 
                                 setPendingDelete(newPendingDelete);
                             }}>
-                            <Icons.TrashIcon name="Delete"
+                            <TrashIcon name="Delete"
                                              style={{ alignSelf: "center" }}
                                              color="red"/>
                         </Clickable>
@@ -230,7 +237,7 @@ const ReplacementRow = (props: RowProps) => {
 
                             props.onChange(newRep);
                         }}>
-                        <Icons.CopyIcon name="Duplicate"
+                        <CopyIcon name="Duplicate"
                                         style={{ alignSelf: "center" }}
                                         color={"grey"}/>
                     </Clickable>
@@ -276,7 +283,7 @@ const ReplacementRow = (props: RowProps) => {
                             props.onChange(updatedReplacement);
 
                         }}>
-                        <Icons.UndoIcon name="Reset"
+                        <UndoIcon name="Reset"
                                         style={{ alignSelf: "center" }}
                                         color="red"/>
                     </Clickable>
