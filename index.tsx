@@ -1,6 +1,6 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
+ * Copyright (c) 2025 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -72,7 +72,7 @@ function unfurlEmbed(url: string, oldUrl: string, message: Message) {
     RestAPI.post({
         url: Constants.Endpoints.UNFURL_EMBED_URLS,
         body: {
-            urls: [url] // The endpoint accepts up to 5 urls at a time but if we send 5 and number 3 fails, it will just return 4 embeds with no indication of which embed corresponds to which url
+            urls: [url]
         }
     }).catch(e => {
         showFailureToast("Failed to get embed");

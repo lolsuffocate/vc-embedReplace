@@ -1,6 +1,6 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
+ * Copyright (c) 2025 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -17,8 +17,7 @@ type Replacement = {
     isRegex: boolean,
     isValid?: boolean,
     key: string,
-    toDelete?: boolean,
-    newEntry?: boolean
+    toDelete?: boolean
 };
 
 type RowProps = {
@@ -37,14 +36,6 @@ const ReplacementRow = (props: RowProps) => {
     const [isRegex, setIsRegex] = React.useState(props.replacement.isRegex);
     const [errorString, setErrorString] = React.useState<string>();
     const [isValid, setIsValid] = React.useState(false);
-    const storeVersion = settings.store.replacements?.find(rep => rep.key === props.replacement.key);
-    const before = {
-        match: storeVersion?.match ?? "",
-        replace: storeVersion?.replace ?? "",
-        isRegex: storeVersion?.isRegex ?? false,
-        key: props.replacement.key,
-        isValid: storeVersion?.isValid ?? false
-    };
 
     React.useEffect(() => {
         let newIsValid = (match !== undefined && replace !== undefined && match !== null && replace !== null && match !== "" && replace !== "") as boolean;
@@ -69,40 +60,39 @@ const ReplacementRow = (props: RowProps) => {
     return (
         <div className={"vc-embed-replace-row"}>
             <div className={"vc-embed-replace-row-line"}>
-                    <TextInput value={match}
-                               className={"vc-embed-replace-row-text-input"}
-                               placeholder={"Match" + (isRegex ? " Regex" : " Text")}
-                               onChange={setMatch}
-                               error={errorString}
-                               label="Match"/>
-                    <TextInput value={replace}
-                               className={"vc-embed-replace-row-text-input"}
-                               onChange={setReplace}
-                               placeholder="Replace"
-                               label="Replace"/>
+                <TextInput value={match}
+                           className={"vc-embed-replace-row-text-input"}
+                           placeholder={"Match" + (isRegex ? " Regex" : " Text")}
+                           onChange={setMatch}
+                           error={errorString}
+                           label="Match"/>
+                <TextInput value={replace}
+                           className={"vc-embed-replace-row-text-input"}
+                           onChange={setReplace}
+                           placeholder="Replace"
+                           label="Replace"/>
                 {props?.newRow && isValid &&
-                        <TooltipContainer text="Save">
-                            <Clickable
-                                className="vc-embed-replace-button vc-embed-replace-save"
-                                onClick={() => {
-                                    const updatedReplacement = {
-                                        match,
-                                        replace,
-                                        isRegex,
-                                        key: props?.newRow ? Math.random().toString(36).substring(7) : props.replacement.key,
-                                        newEntry: true,
-                                        toSave: true
-                                    };
+                    <TooltipContainer text="Save">
+                        <Clickable
+                            className="vc-embed-replace-button vc-embed-replace-save"
+                            onClick={() => {
+                                const updatedReplacement = {
+                                    match,
+                                    replace,
+                                    isRegex,
+                                    key: props?.newRow ? Math.random().toString(36).substring(7) : props.replacement.key,
+                                    toSave: true
+                                };
 
-                                    props.onChange(updatedReplacement);
+                                props.onChange(updatedReplacement);
 
-                                    setMatch("");
-                                    setReplace("");
-                                    setIsRegex(false);
-                                }}>
-                                <PlusMediumIcon name="Save" color={"green"} />
-                            </Clickable>
-                        </TooltipContainer>
+                                setMatch("");
+                                setReplace("");
+                                setIsRegex(false);
+                            }}>
+                            <PlusMediumIcon name="Save" color={"green"}/>
+                        </Clickable>
+                    </TooltipContainer>
                 }
                 {!props?.newRow &&
                     <div className="vc-embed-flex-row">
@@ -115,13 +105,12 @@ const ReplacementRow = (props: RowProps) => {
                                         replace,
                                         isRegex,
                                         key: Math.random().toString(36).substring(7),
-                                        newEntry: true,
                                         isValid
                                     };
 
                                     props.onChange(newRep);
                                 }}>
-                                <CopyIcon name="Duplicate" color={"grey"} />
+                                <CopyIcon name="Duplicate" color={"grey"}/>
                             </Clickable>
                         </TooltipContainer>
                         <TooltipContainer text="Delete">
@@ -133,13 +122,12 @@ const ReplacementRow = (props: RowProps) => {
                                         replace,
                                         isRegex,
                                         key: props.replacement.key,
-                                        newEntry: before.match === "" && before.replace === "" && !before.isRegex,
                                         toDelete: true,
                                     };
 
                                     props.onChange(updatedReplacement);
                                 }}>
-                                <TrashIcon name="Delete" color="red" />
+                                <TrashIcon name="Delete" color="red"/>
                             </Clickable>
                         </TooltipContainer>
                     </div>}
@@ -148,7 +136,7 @@ const ReplacementRow = (props: RowProps) => {
                 <Switch value={isRegex}
                         onChange={setIsRegex}
                         className="vc-embed-replace-row-switch">
-                    Is Regex
+                    Regex
                 </Switch>
             </div>
         </div>
@@ -160,64 +148,45 @@ export const settings = definePluginSettings({
         type: OptionType.COMPONENT,
         description: "The URL replacements to apply",
         component(componentProps) {
-            const [saveValues, setSaveValues] = React.useState<Replacement[]>([]);
+            const [reps, setReplacements] = React.useState(settings.store.replacements ?? []);
 
-            React.useEffect(() => {
-                componentProps.setValue(saveValues.map(rep => { // this sets the values that will be saved to settings.replacements when you click save and close
-                    return {
+            const onChange = (newRep: Replacement) => {
+                setReplacements(prevReps => {
+                    if (!prevReps.some(rep => rep.key === newRep.key)) {
+                        return [...prevReps, newRep];
+                    }
+
+                    const updatedReps = prevReps.map((rep: Replacement) =>
+                        rep.key === newRep.key ? { ...rep, ...newRep } : rep
+                    ).filter(rep => !rep.toDelete);
+
+                    componentProps.setValue(updatedReps.map((rep: Replacement) => ({
                         match: rep.match,
                         replace: rep.replace,
                         isRegex: rep.isRegex,
                         key: rep.key,
-                        isValid: rep.isValid
-                    };
-                }));
-            }, [saveValues]);
+                        isValid: rep.isValid ?? true
+                    })));
 
-            // clone the existing settings array so we don't accidentally modify the original
-            const clonedReplacements = settings.store.replacements?.map(rep => {
-                return { ...rep };
-            });
-
-            const [reps, setReplacements] = React.useState(clonedReplacements ?? []);
-
-            const onChange = (newRep: Replacement) => {
-                setReplacements(prevReps => {
-                    if (newRep.newEntry && !prevReps.some(rep => rep.key === newRep.key)) {
-                        return [...prevReps, newRep];
-                    }
-                    const newReps = prevReps.map(rep => {
-                        if (rep.key === newRep.key) {
-                            rep.match = newRep.match;
-                            rep.replace = newRep.replace;
-                            rep.isRegex = newRep.isRegex;
-                            rep.newEntry = newRep?.newEntry;
-                            rep.isValid = newRep?.isValid;
-                            rep.toDelete = newRep?.toDelete;
-                        }
-                        return rep;
-                    }).filter(rep => !(rep.newEntry && rep.toDelete));
-
-                    setSaveValues(newReps.filter(rep => !rep.toDelete));
-
-                    return newReps.filter(rep => !rep.toDelete);
+                    return updatedReps;
                 });
             };
 
-            const inners = reps?.map((rep, _) => {
+            const rows = reps?.map((rep, _) => {
                 return <ReplacementRow key={rep?.key} replacement={rep} onChange={onChange}/>;
             });
 
-            return <Forms.FormSection title="URL Replacements">
-                <Forms.FormText>These replacements will be applied to URLs before they are used to fetch
-                    embeds</Forms.FormText>
-                <Forms.FormText>Changes do not take effect until you save and close</Forms.FormText>
-                <Forms.FormText>Any changes will only take effect on newly loaded embeds, reload to apply to already
-                    loaded embeds</Forms.FormText>
-                <ReplacementRow replacement={{ match: "", replace: "", isRegex: false, key: "" }} newRow={true}
-                                onChange={onChange}/>
-                {inners}
-            </Forms.FormSection>;
+            return (
+                <Forms.FormSection title="URL Replacements">
+                    <Forms.FormText>These replacements will be applied to URLs before they are used to fetch embeds</Forms.FormText>
+                    <Forms.FormText>Changes do not take effect until you save and close</Forms.FormText>
+                    <Forms.FormText>Any changes will only take effect on newly loaded embeds, reload to apply to already loaded embeds</Forms.FormText>
+
+                    <ReplacementRow replacement={{ match: "", replace: "", isRegex: false, key: "" }} newRow={true} onChange={onChange}/>
+                    {rows}
+
+                </Forms.FormSection>
+            );
         }
     }
 }).withPrivateSettings<{
